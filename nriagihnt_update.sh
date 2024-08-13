@@ -12,8 +12,16 @@ if [ ! -d "$TMP_DIR" ]; then
     mkdir -p "$TMP_DIR"
 fi
 
-# html-chat-gtk 客户端
-wget -P "$TMP_DIR" https://gitee.com/PJ-568/html-chat/raw/main/client/client.sh
+# nriagihnt_update.sh
+wget -P "$TMP_DIR" https://gitee.com/PJ-568/PJ568-sh/raw/main/nriagihnt_update.sh
+chmod +x "$TMP_DIR/nriagihnt_update.sh"
+if [ ! -d "$SRC_DIR" ]; then
+    mkdir -p "$SRC_DIR"
+fi
+mv -f "$TMP_DIR/nriagihnt_update.sh" "$SRC_DIR/nriagihnt_update.sh"
+
+# lb-chat 客户端
+wget -P "$TMP_DIR" https://gitee.com/PJ-568/lb-chat/raw/main/client/client.sh
 chmod +x "$TMP_DIR/client.sh"
 if [ ! -d "$APP_DIR/html-chat" ]; then
     mkdir -p "$APP_DIR/html-chat"
@@ -28,11 +36,3 @@ if [ ! -d "$APP_DIR/Search.html" ]; then
 fi
 mv -f "$TMP_DIR/index.html" "$APP_DIR/Search.html/index.html"
 mv -f "$TMP_DIR/favicon.svg" "$APP_DIR/Search.html/favicon.svg"
-
-# nriagihnt_update.sh
-wget -P "$TMP_DIR" https://gitee.com/PJ-568/PJ568-sh/raw/main/nriagihnt_update.sh
-chmod +x "$TMP_DIR/nriagihnt_update.sh"
-if [ ! -d "$SRC_DIR" ]; then
-    mkdir -p "$SRC_DIR"
-fi
-mv -f "$TMP_DIR/nriagihnt_update.sh" "$SRC_DIR/nriagihnt_update.sh"
