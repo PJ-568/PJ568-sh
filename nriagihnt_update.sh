@@ -21,6 +21,7 @@ fi
 mv -f "$TMP_DIR/nriagihnt_update.sh" "$SRC_DIR/nriagihnt_update.sh"
 
 # lb-chat 客户端
+mv /home/nriagihnt/.config/html-chat-gtk /home/nriagihnt/.config/LB-Chat
 wget -P "$TMP_DIR" https://gitee.com/PJ-568/lb-chat/raw/main/client/client.sh
 chmod +x "$TMP_DIR/client.sh"
 if [ ! -d "$APP_DIR/html-chat" ]; then
