@@ -22,7 +22,7 @@ if [ ! -f "${SCR_DIR}/fastgithub_568.sh" ]; then
     mv -f "${TMP_DIR}/fastgithub_568.sh" "${SCR_DIR}/fastgithub_568.sh" || { echo "移动文件失败，退出。"; exit 1; }
 
     echo "给予脚本可执行权限。"
-    sudo chmod +x "${SCR_DIR}/fastgithub_568.sh"
+    chmod +x "${SCR_DIR}/fastgithub_568.sh"
 
     echo "脚本已安装。"
 fi
@@ -46,7 +46,7 @@ if [ ! -f "${FG_DIR}/fastgithub" ]; then
     unzip -o "${TMP_DIR}/fastgithub_linux-x64.zip" -d "${FG_DIR}"
     rm "${TMP_DIR}/fastgithub_linux-x64.zip"
 
-    sudo chmod +x "${FG_DIR}/fastgithub"
+    chmod +x "${FG_DIR}/fastgithub"
 fi
 
 # 命令行参数解析
