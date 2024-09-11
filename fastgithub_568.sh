@@ -52,7 +52,6 @@ if [ ! -f "${FG_DIR}/fastgithub" ]; then
 fi
 
 # 命令行参数解析
-echo "正在启动 FastGithub 。"
 for i in $@; do
     if [ "$i" == "start" ]; then
         sudo "${FG_DIR}/fastgithub" start || { echo "启动失败。"; exit 1; }
