@@ -19,7 +19,7 @@ if [ ! -f "${SCR_DIR}/fastgithub_568.sh" ]; then
     fi
 
     wget -P "${TMP_DIR}" https://gitee.com/PJ-568/PJ568-sh/raw/main/fastgithub_568.sh || { echo "下载更新 失败，退出。"; exit 1; }
-    mv -f "${TMP_DIR}/fastgithub_568.sh" "${SCR_DIR}/fastgithub_568.sh"
+    mv -f "${TMP_DIR}/fastgithub_568.sh" "${SCR_DIR}/fastgithub_568.sh" || { echo "移动文件失败，退出。"; exit 1; }
 
     echo "给予脚本可执行权限。"
     sudo chmod +x "${SCR_DIR}/fastgithub_568.sh"
@@ -64,7 +64,7 @@ for i in $@; do
         git config --global --unset https.proxy
     elif [ "$i" == "update" ]; then
         wget -P "${TMP_DIR}" https://gitee.com/PJ-568/PJ568-sh/raw/main/fastgithub_568.sh || { echo "下载更新 失败，退出。"; exit 1; }
-        mv -f "${TMP_DIR}/fastgithub_568.sh" "${SCR_DIR}/fastgithub_568.sh"
+        mv -f "${TMP_DIR}/fastgithub_568.sh" "${SCR_DIR}/fastgithub_568.sh" || { echo "移动文件失败，退出。"; exit 1; }
         echo "更新成功，请重启脚本。"
     else
         echo "使用方法|Usage: fastgithub [start|stop|update]"
