@@ -54,13 +54,13 @@ fi
 # 命令行参数解析
 for i in $@; do
     if [ "$i" == "start" ]; then
-        sudo "${FG_DIR}/fastgithub" start || { echo "启动失败。"; exit 1; }
+        sudo ${FG_DIR}/fastgithub start || { echo "启动失败。"; exit 1; }
         echo "FastGithub 启动成功，默认代理地址：http://localhost:38457"
         git config --global http.https://github.com.proxy http://127.0.0.1:38457
         git config --global https.https://github.com.proxy http://127.0.0.1:38457
         exit 0
     elif [ "$i" == "stop" ]; then
-        sudo "${FG_DIR}/fastgithub" stop || { echo "停止失败。"; exit 1; }
+        sudo ${FG_DIR}/fastgithub stop || { echo "停止失败。"; exit 1; }
         echo "FastGithub 停止成功。"
         git config --global --unset http.proxy
         git config --global --unset https.proxy
