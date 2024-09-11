@@ -43,8 +43,10 @@ if [ ! -f "${FG_DIR}/fastgithub" ]; then
     fi
 
     wget -P "${TMP_DIR}" https://github.moeyy.xyz/https://github.com/WangGithubUser/FastGitHub/releases/download/v2.1.5/fastgithub_linux-x64.zip || { echo "下载 FastGithub 失败，退出。"; exit 1; }
-    unzip -o "${TMP_DIR}/fastgithub_linux-x64.zip" -d "${FG_DIR}"
+    unzip -n "${TMP_DIR}/fastgithub_linux-x64.zip" -d "${TMP_DIR}/"
     rm "${TMP_DIR}/fastgithub_linux-x64.zip"
+
+    mv -f "${TMP_DIR}/fastgithub_linux-x64" "${FG_DIR}"
 
     chmod +x "${FG_DIR}/fastgithub"
 fi
