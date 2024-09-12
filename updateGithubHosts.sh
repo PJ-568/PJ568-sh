@@ -15,7 +15,7 @@ fi
 echo "开始写入 Github hosts。"
 TMPFILE=$(mktemp)
 sudo curl https://hosts.gitcdn.top/hosts.txt >> "$TMPFILE" || { echo "写入 Github hosts 失败。"; exit 4; }
-sudo cat "$TMPFILE" >> /etc/hosts || { echo "追加 Github hosts 到 /etc/hosts 失败。"; exit 5; }
+sudo sh -c "cat $TMPFILE >> /etc/hosts" || { echo "追加 Github hosts 到 /etc/hosts 失败。"; exit 5; }
 
 echo "完毕，请重启网络配置。"
 exit 0
