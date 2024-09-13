@@ -12,10 +12,11 @@ case "$domin" in
     "github.com")
     url="https://githubfast.com/"$others;
     echo "download from github mirror $url";
-    /usr/bin/curl -gqb "" -fLC - --retry 3 --retry-delay 3 -o $1 $url;
+    /usr/bin/curl -qgb "" -fLC - --retry 3 --retry-delay 3 -o $1 $url;
     ;;
     *)
     url=$2;
-    /usr/bin/axel -n 15 -a -o $1 $url;
+    /usr/bin/curl -qgb "" -fLC - --retry 3 --retry-delay 3 -o $1 $url;
+    # /usr/bin/axel -n 15 -a -o $1 $url;
     ;;
 esac
