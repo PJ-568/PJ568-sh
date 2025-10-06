@@ -31,12 +31,22 @@ show_gui() {
   # 使用 yad 创建亮度调节对话框 (使用整数范围 5-100，然后除以 100)
   brightness_int=$(yad --title="亮度调节" --window-icon="preferences-system" \
     --scale --text="调整屏幕亮度:" --min-value=5 --max-value=100 --value="$(echo "$current_brightness * 100" | bc)" \
-    --step=5 --button="确定:0" --button="取消:1")
+    --step=5 --button="应用:2" --button="确定:0" --button="取消:1")
 
-  # 检查用户是否点击了取消
-  if [ $? -ne 0 ]; then
+  # 检查用户点击的按钮
+  button_return_code=$?
+  
+  # 如果点击取消，退出
+  if [ $button_return_code -eq 1 ]; then
     echo "亮度调节已取消"
     exit 0
+  fi
+  
+  # 如果点击应用，立即设置亮度但不退出
+  if [ $button_return_code -eq 2 ]; then
+    apply_brightness=true
+  else
+    apply_brightness=false
   fi
 
   # 验证 brightness_int 是否为有效数字
@@ -66,6 +76,11 @@ show_gui() {
     echo "  1. 显示器名称是否正确 (当前使用: eDP)"
     echo "  2. 是否安装了 xrandr"
     exit 1
+  fi
+  
+  # 如果点击的是应用按钮，重新显示对话框以便继续调整
+  if [ "$apply_brightness" = true ]; then
+    show_gui
   fi
 }
 
