@@ -2,20 +2,22 @@
 
 # 亮度控制脚本
 # 用法: brightness-control.sh [亮度值] | [gui|--gui|-g]
-# 亮度值范围: 0.1 到 1.0 (0.1 = 10%, 1.0 = 100%)
+# 亮度值范围: 0.1 到 1.5 (0.1 = 10%, 1.0 = 100%, 1.5 = 150%)
 # 示例:
 #   brightness-control.sh 0.5  # 设置亮度为 50%
 #   brightness-control.sh 1.0  # 设置亮度为 100%
+#   brightness-control.sh 1.5  # 设置亮度为 150%
 #   brightness-control.sh gui  # 启动 GUI 界面
 
 # 显示帮助信息
 show_help() {
   echo "亮度控制脚本"
   echo "用法: $(basename "$0") [亮度值] | [gui|--gui|-g]"
-  echo "亮度值范围: 0.1 到 1.0 (0.1 = 10%, 1.0 = 100%)"
+  echo "亮度值范围: 0.1 到 1.5 (0.1 = 10%, 1.0 = 100%, 1.5 = 150%)"
   echo "示例:"
   echo "  $(basename "$0") 0.5  # 设置亮度为 50%"
   echo "  $(basename "$0") 1.0  # 设置亮度为 100%"
+  echo "  $(basename "$0") 1.5  # 设置亮度为 150%"
   echo "  $(basename "$0") gui  # 启动 GUI 界面"
   echo "  $(basename "$0") help # 显示此帮助信息"
 }
@@ -28,9 +30,9 @@ show_gui() {
     current_brightness=1.0
   fi
 
-  # 使用 yad 创建亮度调节对话框 (使用整数范围 5-100，然后除以 100)
+  # 使用 yad 创建亮度调节对话框 (使用整数范围 5-150，然后除以 100)
   brightness_int=$(yad --title="亮度调节" --window-icon="preferences-system" \
-    --scale --text="调整屏幕亮度:" --min-value=5 --max-value=100 --value="$(echo "$current_brightness * 100" | bc)" \
+    --scale --text="调整屏幕亮度:" --min-value=5 --max-value=150 --value="$(echo "$current_brightness * 100" | bc)" \
     --step=5 --button="应用:2" --button="确定:0" --button="取消:1")
 
   # 检查用户点击的按钮
@@ -59,11 +61,11 @@ show_gui() {
   brightness=$(echo "scale=2; $brightness_int / 100" | bc)
   echo "[Debug] brightness_int=$brightness_int, brightness=$brightness"
 
-  # 确保亮度值在有效范围内 (0.05-1.0)
+  # 确保亮度值在有效范围内 (0.05-1.5)
   if (( $(echo "$brightness < 0.05" | bc -l) )); then
     brightness=0.05
-  elif (( $(echo "$brightness > 1.0" | bc -l) )); then
-    brightness=1.0
+  elif (( $(echo "$brightness > 1.5" | bc -l) )); then
+    brightness=1.5
   fi
 
   # 设置亮度
@@ -112,8 +114,8 @@ fi
 
 # 输入验证 - 检查亮度值范围
 brightness=$1
-if (( $(echo "$brightness < 0.1" | bc -l) )) || (( $(echo "$brightness > 1.0" | bc -l) )); then
-  echo "错误: 亮度值必须在 0.1 到 1.0 之间"
+if (( $(echo "$brightness < 0.1" | bc -l) )) || (( $(echo "$brightness > 1.5" | bc -l) )); then
+  echo "错误: 亮度值必须在 0.1 到 1.5 之间"
   show_help
   exit 1
 fi
