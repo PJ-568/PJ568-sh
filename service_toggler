@@ -8,7 +8,7 @@
 # 0: en-US, 1: zh-Hans-CN
 CURRENT_LANG=0
 
-# Supported languages
+# 支持的语言 | Supported languages
 declare -A LANGUAGES=(
   ["en"]="0"
   ["en_US"]="0"
