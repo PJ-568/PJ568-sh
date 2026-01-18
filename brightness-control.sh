@@ -1,114 +1,38 @@
 #!/bin/bash
 
-# 亮度控制脚本
-# 用法: brightness-control.sh [亮度值] [显示设备] | [gui|--gui|-g]
-# 亮度值范围: 0.1 到 1.95 (0.1 = 10%, 1.0 = 100%, 1.95 = 195%)
+# 亮度控制脚本 (使用 xgamma)
+# 用法: brightness-control.sh [亮度值] | [gui|--gui|-g]
+# 亮度值范围: 0.1 到 2.0 (0.1 = 10%, 1.0 = 100%, 2.0 = 200%)
 # 示例:
-#   brightness-control.sh 0.5  # 设置默认显示设备亮度为 50%
-#   brightness-control.sh 1.0 eDP  # 设置 eDP 显示设备亮度为 100%
-#   brightness-control.sh 1.95 HDMI-1  # 设置 HDMI-1 显示设备亮度为 195%
+#   brightness-control.sh 0.5  # 设置亮度为 50%
+#   brightness-control.sh 1.0  # 设置亮度为 100%
+#   brightness-control.sh 2.0  # 设置亮度为 200%
 #   brightness-control.sh gui  # 启动 GUI 界面
 
 # 显示帮助信息
 show_help() {
-  echo "亮度控制脚本"
-  echo "用法: $(basename "$0") [亮度值] [显示设备] | [gui|--gui|-g]"
-  echo "亮度值范围: 0.1 到 1.95 (0.1 = 10%, 1.0 = 100%, 1.95 = 195%)"
+  echo "亮度控制脚本 (使用 xgamma)"
+  echo "用法: $(basename "$0") [亮度值] | [gui|--gui|-g]"
+  echo "亮度值范围: 0.1 到 2.0 (0.1 = 10%, 1.0 = 100%, 2.0 = 200%)"
   echo "示例:"
-  echo "  $(basename "$0") 0.5  # 设置默认显示设备亮度为 50%"
-  echo "  $(basename "$0") 1.0 eDP  # 设置 eDP 显示设备亮度为 100%"
-  echo "  $(basename "$0") 1.95 HDMI-1  # 设置 HDMI-1 显示设备亮度为 195%"
+  echo "  $(basename "$0") 0.5  # 设置亮度为 50%"
+  echo "  $(basename "$0") 1.0  # 设置亮度为 100%"
+  echo "  $(basename "$0") 2.0  # 设置亮度为 200%"
   echo "  $(basename "$0") gui  # 启动 GUI 界面"
   echo "  $(basename "$0") help # 显示此帮助信息"
-  echo ""
-  echo "可用显示设备:"
-  list_displays
-}
-
-# 列出可用的显示设备
-list_displays() {
-  echo "检测到的显示设备:"
-  xrandr | grep " connected " | awk '{print "  " $1}'
-}
-
-# 获取默认显示设备
-get_default_display() {
-  # 尝试获取第一个连接的显示设备
-  default_display=$(xrandr | grep " connected " | head -n1 | awk '{print $1}')
-  if [ -z "$default_display" ]; then
-    echo "eDP"  # 回退到默认值
-  else
-    echo "$default_display"
-  fi
-}
-
-# 验证显示设备是否存在
-validate_display() {
-  local display="$1"
-  if ! xrandr | grep -q "^$display connected"; then
-    echo "错误: 显示设备 '$display' 不存在或未连接"
-    echo ""
-    list_displays
-    return 1
-  fi
-  return 0
 }
 
 # GUI 模式函数
 show_gui() {
-  # 获取可用显示设备列表
-  displays=$(xrandr | grep " connected " | awk '{print $1}')
-  if [ -z "$displays" ]; then
-    echo "错误: 未检测到任何连接的显示设备"
-    exit 1
+  # 获取当前gamma值
+  current_gamma=$(xgamma 2>/dev/null | grep -o "gamma = [0-9.]*" | awk '{print $3}')
+  if [ -z "$current_gamma" ]; then
+    current_gamma=1.0
   fi
 
-  # 统计显示设备数量
-  display_count=$(echo "$displays" | wc -w)
-
-  # 如果只有一个显示设备，自动选择它
-  if [ "$display_count" -eq 1 ]; then
-    display=$(echo "$displays")
-    echo "检测到单个显示设备，自动选择: $display"
-  else
-    # 创建显示设备选择列表
-    display_list=""
-    for display in $displays; do
-      display_list="$display_list$display!"
-    done
-    display_list="${display_list%!}"  # 移除最后一个感叹号
-
-    # 让用户选择显示设备
-    selected_display=$(yad --title="选择显示设备" --window-icon="preferences-system" \
-      --form --field="选择显示设备:CB" "$display_list" \
-      --button="确定:0" --button="取消:1")
-
-    # 检查用户点击的按钮
-    button_return_code=$?
-
-    # 如果点击取消，退出
-    if [ $button_return_code -eq 1 ]; then
-      echo "显示设备选择已取消"
-      exit 0
-    fi
-
-    # 提取选择的显示设备
-    display=$(echo "$selected_display" | cut -d'|' -f1)
-    if [ -z "$display" ]; then
-      echo "错误: 未选择显示设备"
-      exit 1
-    fi
-  fi
-
-  # 获取当前亮度值
-  current_brightness=$(xrandr --verbose | grep -A5 "^$display" | grep -i "brightness" | head -n1 | awk '{print $2}')
-  if [ -z "$current_brightness" ]; then
-    current_brightness=1.0
-  fi
-
-  # 使用 yad 创建亮度调节对话框 (使用整数范围 5-195，然后除以 100)
-  brightness_int=$(yad --title="亮度调节 - $display" --window-icon="preferences-system" \
-    --scale --text="调整 $display 显示设备亮度:" --min-value=5 --max-value=195 --value="$(echo "$current_brightness * 100" | bc)" \
+  # 使用 yad 创建亮度调节对话框 (使用整数范围 10-200，然后除以 100)
+  brightness_int=$(yad --title="亮度调节" --window-icon="preferences-system" \
+    --scale --text="调整屏幕亮度:" --min-value=10 --max-value=200 --value="$(echo "$current_gamma * 100" | bc)" \
     --step=5 --button="应用:2" --button="确定:0" --button="取消:1")
 
   # 检查用户点击的按钮
@@ -133,26 +57,24 @@ show_gui() {
     exit 1
   fi
 
-  # 将整数转换为小数亮度值
-  brightness=$(echo "scale=2; $brightness_int / 100" | bc)
-  echo "[Debug] brightness_int=$brightness_int, brightness=$brightness"
+  # 将整数转换为小数gamma值
+  gamma=$(echo "scale=2; $brightness_int / 100" | bc)
+  echo "[Debug] brightness_int=$brightness_int, gamma=$gamma"
 
-  # 确保亮度值在有效范围内 (0.05-1.95)
-  if (( $(echo "$brightness < 0.05" | bc -l) )); then
-    brightness=0.05
-  elif (( $(echo "$brightness > 1.95" | bc -l) )); then
-    brightness=1.95
+  # 确保gamma值在有效范围内 (0.1-2.0)
+  if (( $(echo "$gamma < 0.1" | bc -l) )); then
+    gamma=0.1
+  elif (( $(echo "$gamma > 2.0" | bc -l) )); then
+    gamma=2.0
   fi
 
-  # 设置亮度
-  echo "正在设置 $display 显示设备亮度为 $brightness..."
-  if xrandr --output "$display" --brightness "$brightness"; then
-    echo "亮度设置成功: $display -> $brightness"
+  # 设置gamma值
+  echo "正在设置屏幕亮度为 $gamma..."
+  if xgamma -gamma "$gamma"; then
+    echo "亮度设置成功: $gamma"
   else
     echo "错误: 亮度设置失败"
-    echo "请检查:"
-    echo "  1. 显示器名称是否正确 (当前使用: $display)"
-    echo "  2. 是否安装了 xrandr"
+    echo "请检查是否安装了 xgamma"
     exit 1
   fi
 
@@ -188,35 +110,20 @@ if ! echo "$1" | grep -qE '^[0-9]+(\.[0-9]+)?$'; then
   exit 1
 fi
 
-# 输入验证 - 检查亮度值范围
-brightness=$1
-if (( $(echo "$brightness < 0.1" | bc -l) )) || (( $(echo "$brightness > 1.95" | bc -l) )); then
-  echo "错误: 亮度值必须在 0.1 到 1.95 之间"
+# 输入验证 - 检查gamma值范围
+gamma=$1
+if (( $(echo "$gamma < 0.1" | bc -l) )) || (( $(echo "$gamma > 2.0" | bc -l) )); then
+  echo "错误: gamma 值必须在 0.1 到 2.0 之间"
   show_help
   exit 1
 fi
 
-# 确定显示设备
-if [ $# -ge 2 ]; then
-  # 用户指定了显示设备
-  display="$2"
-  if ! validate_display "$display"; then
-    exit 1
-  fi
-else
-  # 使用默认显示设备
-  display=$(get_default_display)
-  echo "使用默认显示设备: $display"
-fi
-
-# 设置亮度
-echo "正在设置 $display 显示设备亮度为 $brightness..."
-if xrandr --output "$display" --brightness "$brightness"; then
-  echo "亮度设置成功: $display -> $brightness"
+# 设置gamma值
+echo "正在设置屏幕亮度为 $gamma..."
+if xgamma -gamma "$gamma"; then
+  echo "亮度设置成功: $gamma"
 else
   echo "错误: 亮度设置失败"
-  echo "请检查:"
-  echo "  1. 显示器名称是否正确 (当前使用: $display)"
-  echo "  2. 是否安装了 xrandr"
+  echo "请检查是否安装了 xgamma（通常在 xorg-xgamma 包中）"
   exit 1
 fi
