@@ -22,45 +22,107 @@ show_help() {
   echo "  $(basename "$0") help # 显示此帮助信息"
 }
 
+# 获取所有已连接的输出设备
+get_connected_outputs() {
+  # 使用 xrandr 获取已连接的输出，忽略可能的错误
+  xrandr 2>/dev/null | grep " connected" | awk '{print $1}'
+}
+
+# 获取所有已连接设备的平均亮度值
+get_average_brightness() {
+  local outputs
+  local output
+  local brightness_sum=0
+  local brightness_count=0
+  local brightness_value
+
+  outputs=$(get_connected_outputs)
+  if [ -z "$outputs" ]; then
+    echo "1.0"
+    return 0
+  fi
+
+  for output in $outputs; do
+    # 获取该输出的亮度值
+    brightness_value=$(xrandr --verbose --output "$output" 2>/dev/null | grep -i "brightness" | awk '{print $2}')
+    if [ -n "$brightness_value" ] && echo "$brightness_value" | grep -qE '^[0-9]+(\.[0-9]+)?$'; then
+      brightness_sum=$(echo "scale=2; $brightness_sum + $brightness_value" | bc)
+      brightness_count=$((brightness_count + 1))
+    fi
+  done
+
+  if [ "$brightness_count" -eq 0 ]; then
+    echo "1.0"
+    return 0
+  fi
+
+  echo "scale=2; $brightness_sum / $brightness_count" | bc
+}
+
 # 设置亮度函数
 set_brightness() {
   local brightness=$1
+  local outputs
+  local output
 
   echo "[Debug] brightness=$brightness"
+
+  # 获取所有已连接的输出设备
+  outputs=$(get_connected_outputs)
+  if [ -z "$outputs" ]; then
+    echo "错误: 未找到已连接的输出设备"
+    exit 1
+  fi
 
   # 根据亮度值选择设置方式
   if (( $(echo "$brightness < 1.0" | bc -l) )); then
     # 亮度小于 100%，使用 xrandr，xgamma 设为 1.0
     echo "亮度 < 100%，使用 xrandr 设置亮度"
-    if xrandr --output eDP --brightness "$brightness"; then
-      echo "xrandr 设置成功: $brightness"
-      # 设置 xgamma 为 1.0
-      xgamma -gamma 1.0 > /dev/null 2>&1
-    else
-      echo "错误: xrandr 亮度设置失败"
+    success=false
+    for output in $outputs; do
+      if xrandr --output "$output" --brightness "$brightness"; then
+        echo "xrandr 设置成功 [$output]: $brightness"
+        success=true
+      else
+        echo "警告: 输出设备 $output 亮度设置失败"
+      fi
+    done
+    if [ "$success" = false ]; then
+      echo "错误: 所有输出设备亮度设置失败"
       exit 1
     fi
+    # 设置 xgamma 为 1.0
+    xgamma -gamma 1.0 > /dev/null 2>&1
   elif (( $(echo "$brightness == 1.0" | bc -l) )); then
     # 亮度等于 100%，两者都设置为 1.0
     echo "亮度 = 100%，同时设置 xrandr 和 xgamma"
-    if xrandr --output eDP --brightness 1.0; then
-      echo "xrandr 设置成功: 1.0"
-      if xgamma -gamma 1.0; then
-        echo "xgamma 设置成功: 1.0"
+    success=false
+    for output in $outputs; do
+      if xrandr --output "$output" --brightness 1.0; then
+        echo "xrandr 设置成功 [$output]: 1.0"
+        success=true
       else
-        echo "警告: xgamma 设置失败，但 xrandr 已设置"
+        echo "警告: 输出设备 $output 亮度设置失败"
       fi
-    else
-      echo "错误: xrandr 亮度设置失败"
+    done
+    if [ "$success" = false ]; then
+      echo "错误: 所有输出设备亮度设置失败"
       exit 1
+    fi
+    if xgamma -gamma 1.0; then
+      echo "xgamma 设置成功: 1.0"
+    else
+      echo "警告: xgamma 设置失败，但 xrandr 已设置"
     fi
   else
     # 亮度大于 100%，使用 xgamma，xrandr 设为 1.0
     echo "亮度 > 100%，使用 xgamma 设置亮度"
     if xgamma -gamma "$brightness"; then
       echo "xgamma 设置成功: $brightness"
-      # 设置 xrandr 为 1.0
-      xrandr --output eDP --brightness 1.0 > /dev/null 2>&1
+      # 设置 xrandr 为 1.0（所有已连接输出）
+      for output in $outputs; do
+        xrandr --output "$output" --brightness 1.0 > /dev/null 2>&1
+      done
     else
       echo "错误: xgamma 亮度设置失败"
       exit 1
@@ -70,8 +132,12 @@ set_brightness() {
 
 # GUI 模式函数
 show_gui() {
-  # 获取当前亮度值
-  current_brightness=$(xrandr --verbose | grep -i "brightness" | head -n1 | awk '{print $2}')
+  # 获取当前亮度值（从第一个已连接的输出设备）
+  outputs=$(get_connected_outputs)
+  if [ -n "$outputs" ]; then
+    first_output=$(echo "$outputs" | head -n1)
+    current_brightness=$(xrandr --verbose --output "$first_output" 2>/dev/null | grep -i "brightness" | awk '{print $2}')
+  fi
   if [ -z "$current_brightness" ]; then
     current_brightness=1.0
   fi
