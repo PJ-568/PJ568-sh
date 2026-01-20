@@ -77,8 +77,8 @@ show_gui() {
   fi
 
   # 获取当前 gamma 值（计算三色平均值）
-  current_gamma=$(xgamma 2>/dev/null | sed 's/[^0-9.]/ /g' | awk '{print ($1+$2+$3)/3}')
-  if [ -z "$current_gamma" ]; then
+  current_gamma=$(xgamma 2>&1 | awk -F'[, ]+' '{gsub(/[^0-9.]/, "", $3); gsub(/[^0-9.]/, "", $5); gsub(/[^0-9.]/, "", $7); print ($3+$5+$7)/3}')
+  if [ -z "$current_gamma" ] || [ "$current_gamma" = "0" ]; then
     current_gamma=1.0
   fi
 
