@@ -132,15 +132,8 @@ set_brightness() {
 
 # GUI 模式函数
 show_gui() {
-  # 获取当前亮度值（从第一个已连接的输出设备）
-  outputs=$(get_connected_outputs)
-  if [ -n "$outputs" ]; then
-    first_output=$(echo "$outputs" | head -n1)
-    current_brightness=$(xrandr --verbose --output "$first_output" 2>/dev/null | grep -i "brightness" | awk '{print $2}')
-  fi
-  if [ -z "$current_brightness" ]; then
-    current_brightness=1.0
-  fi
+  # 获取当前平均亮度值（从所有已连接的输出设备）
+  current_brightness=$(get_average_brightness)
 
   # 获取当前 gamma 值（计算三色平均值）
   current_gamma=$(xgamma 2>&1 | awk -F'[, ]+' '{gsub(/[^0-9.]/, "", $3); gsub(/[^0-9.]/, "", $5); gsub(/[^0-9.]/, "", $7); print ($3+$5+$7)/3}')
