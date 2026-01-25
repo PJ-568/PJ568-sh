@@ -35,6 +35,7 @@ get_average_brightness() {
   local brightness_sum=0
   local brightness_count=0
   local brightness_value
+  local xrandr_output
 
   outputs=$(get_connected_outputs)
   if [ -z "$outputs" ]; then
@@ -42,9 +43,20 @@ get_average_brightness() {
     return 0
   fi
 
+  # 获取 xrandr --verbose 输出一次，避免重复调用
+  xrandr_output=$(xrandr --verbose 2>/dev/null)
+
   for output in $outputs; do
-    # 获取该输出的亮度值
-    brightness_value=$(xrandr --verbose --output "$output" 2>/dev/null | grep -i "brightness" | awk '{print $2}')
+    # 从 xrandr 输出中提取该显示器的亮度部分
+    # 先找到显示器的连接部分，然后查找 Brightness: 或 Backlight: 行
+    brightness_value=$(echo "$xrandr_output" | grep -A 20 "^$output connected" | grep -E "Brightness:|Backlight:" | head -1 | awk '{print $2}')
+    
+    # 如果没找到，尝试另一种模式：可能是 "Brightness" 没有冒号
+    if [ -z "$brightness_value" ]; then
+      brightness_value=$(echo "$xrandr_output" | grep -A 20 "^$output connected" | grep -i "brightness" | head -1 | awk '{print $NF}')
+    fi
+
+    # 验证亮度值是否为有效数字
     if [ -n "$brightness_value" ] && echo "$brightness_value" | grep -qE '^[0-9]+(\.[0-9]+)?$'; then
       brightness_sum=$(echo "scale=2; $brightness_sum + $brightness_value" | bc)
       brightness_count=$((brightness_count + 1))
@@ -136,7 +148,7 @@ show_gui() {
   current_brightness=$(get_average_brightness)
 
   # 获取当前 gamma 值（计算三色平均值）
-  current_gamma=$(xgamma 2>&1 | awk -F'[, ]+' '{gsub(/[^0-9.]/, "", $3); gsub(/[^0-9.]/, "", $5); gsub(/[^0-9.]/, "", $7); print ($3+$5+$7)/3}')
+  current_gamma=$(xgamma 2>&1 | grep -Eo '[0-9]+(\.[0-9]+)?' | awk '{sum+=$1} END{if(NR==3) print sum/3; else print "1.0"}')
   if [ -z "$current_gamma" ] || [ "$current_gamma" = "0" ]; then
     current_gamma=1.0
   fi
