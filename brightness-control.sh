@@ -50,7 +50,7 @@ get_average_brightness() {
     # 从 xrandr 输出中提取该显示器的亮度部分
     # 先找到显示器的连接部分，然后查找 Brightness: 或 Backlight: 行
     brightness_value=$(echo "$xrandr_output" | grep -A 20 "^$output connected" | grep -E "Brightness:|Backlight:" | head -1 | awk '{print $2}')
-    
+
     # 如果没找到，尝试另一种模式：可能是 "Brightness" 没有冒号
     if [ -z "$brightness_value" ]; then
       brightness_value=$(echo "$xrandr_output" | grep -A 20 "^$output connected" | grep -i "brightness" | head -1 | awk '{print $NF}')
