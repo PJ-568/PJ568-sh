@@ -1,0 +1,13 @@
+[Unit]
+Description=Enable swap on /dev/sda1
+After=dev-sda1.device
+Requires=dev-sda1.device
+ConditionPathExists=/usr/local/bin/swap-on-sda1
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/swap-on-sda1
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

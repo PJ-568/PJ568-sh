@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DEV="/dev/sda1"
+PRIORITY="90"
+
+# 检查块设备是否存在
+if [[ ! -b "$DEV" ]]; then
+    echo "错误: $DEV 不存在或不是块设备" >&2
+    exit 1
+fi
+
+# 检查分区类型是否为 linux-swap
+PART_TYPE=$(lsblk -no FSTYPE "$DEV" 2>/dev/null || true)
+
+if [[ "$PART_TYPE" != "swap" ]]; then
+    echo "错误: $DEV 的文件系统类型是 '$PART_TYPE'，不是 swap" >&2
+    exit 1
+fi
+
+# 启用 swap
+echo "正在启用 $DEV，优先级: $PRIORITY"
+swapon -p "$PRIORITY" "$DEV"
